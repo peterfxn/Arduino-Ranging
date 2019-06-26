@@ -49,7 +49,7 @@ void setup() {
   DW1000.newConfiguration();
   DW1000.setDefaults();
   DW1000.setDeviceAddress(6);
-  DW1000.setNetworkId(10);
+  DW1000.setNetworkId(10); //same as the network id for sender
   DW1000.enableMode(DW1000.MODE_LONGDATA_RANGE_LOWPOWER);
   DW1000.commitConfiguration();
   Serial.println(F("Committed configuration ..."));
@@ -64,7 +64,7 @@ void setup() {
   DW1000.getPrintableDeviceMode(msg);
   Serial.print("Device mode: "); Serial.println(msg);
   // attach callback for (successfully) received messages
-  DW1000.attachReceivedHandler(handleReceived);
+  DW1000.attachReceivedHandler(handleReceived);//update status when necessary
   DW1000.attachReceiveFailedHandler(handleError);
   DW1000.attachErrorHandler(handleError);
   // start reception
@@ -81,11 +81,11 @@ void handleError() {
 }
 
 void receiver() {
-  DW1000.newReceive();
+  DW1000.newReceive();//activate driver to RX mode
   DW1000.setDefaults();
   // so we don't need to restart the receiver manually
-  DW1000.receivePermanently(true);
-  DW1000.startReceive();
+  DW1000.receivePermanently(true);//once the receiver is on, it will not be set to idle state every loop.
+  DW1000.startReceive();//update registers
 }
 
 void loop() {
@@ -93,7 +93,7 @@ void loop() {
   if (received) {
     numReceived++;
     // get data as string
-    DW1000.getData(message);
+    DW1000.getData(message);//load message into RX buffer register
     Serial.print("Received message ... #"); Serial.println(numReceived);
     Serial.print("Data is ... "); Serial.println(message);
     Serial.print("FP power is [dBm] ... "); Serial.println(DW1000.getFirstPathPower());
