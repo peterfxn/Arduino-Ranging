@@ -36,13 +36,13 @@ void setup() {
   Serial.begin(9600);
   // initialize the driver
   DW1000.begin(PIN_IRQ, PIN_RST);
-  DW1000.select(PIN_SS);
+  DW1000.select(PIN_SS);//set data members of DW1000 class with the pins in connection
   Serial.println(F("DW1000 initialized ..."));
   // general configuration
-  DW1000.newConfiguration();
+  DW1000.newConfiguration();//read from DW1000's registers
   DW1000.setDeviceAddress(5);
   DW1000.setNetworkId(10);
-  DW1000.commitConfiguration();
+  DW1000.commitConfiguration();//overwrite DW1000's registers
   Serial.println(F("Committed configuration ..."));
   // wait a bit
   delay(1000);
