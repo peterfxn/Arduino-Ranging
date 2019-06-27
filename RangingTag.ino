@@ -131,10 +131,10 @@ void transmitRange() {
     data[0] = RANGE;
     // delay sending the message and remember expected future sent timestamp
     DW1000Time deltaTime = DW1000Time(replyDelayTimeUS, DW1000Time::MICROSECONDS);
-    timeRangeSent = DW1000.setDelay(deltaTime);
-    timePollSent.getTimestamp(data + 1);
-    timePollAckReceived.getTimestamp(data + 6);
-    timeRangeSent.getTimestamp(data + 11);
+    timeRangeSent = DW1000.setDelay(deltaTime); //timeRangeSent is set to be SYS_TIME + deltaTime
+    timePollSent.getTimestamp(data + 1); //load timePollSent to data[1-5]
+    timePollAckReceived.getTimestamp(data + 6); //load timePollAckReceived to data[6-10]
+    timeRangeSent.getTimestamp(data + 11); //load timeRangeSent to data[11-15]
     DW1000.setData(data, LEN_DATA);
     DW1000.startTransmit();
     //Serial.print("Expect RANGE to be sent @ "); Serial.println(timeRangeSent.getAsFloat());
@@ -188,7 +188,7 @@ void loop() {
         } else if (msgId == RANGE_REPORT) {
             expectedMsgId = POLL_ACK;
             float curRange;
-            memcpy(&curRange, data + 1, 4);
+            memcpy(&curRange, data + 1, 4); //?? curRange is never seen again
             transmitPoll();
             noteActivity();
         } else if (msgId == RANGE_FAILED) {
