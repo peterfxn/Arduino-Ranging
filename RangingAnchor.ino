@@ -58,7 +58,7 @@ DW1000Time timePollAckReceived;
 DW1000Time timeRangeSent;
 DW1000Time timeRangeReceived;
 // last computed range/time
-DW1000Time timeComputedRange;
+DW1000Time timeComputedRange; //computed from the data above, used to compute distance 
 // data buffer
 #define LEN_DATA 16
 byte data[LEN_DATA];
@@ -138,7 +138,7 @@ void transmitPollAck() {
     // delay the same amount as ranging tag
     DW1000Time deltaTime = DW1000Time(replyDelayTimeUS, DW1000Time::MICROSECONDS);
     DW1000.setDelay(deltaTime);
-    DW1000.setData(data, LEN_DATA);
+    DW1000.setData(data, LEN_DATA);//Transmit poll signal
     DW1000.startTransmit();
 }
 
@@ -148,7 +148,7 @@ void transmitRangeReport(float curRange) {
     data[0] = RANGE_REPORT;
     // write final ranging result
     memcpy(data + 1, &curRange, 4);
-    DW1000.setData(data, LEN_DATA);
+    DW1000.setData(data, LEN_DATA);//transmit range signal and range data
     DW1000.startTransmit();
 }
 
@@ -156,7 +156,7 @@ void transmitRangeFailed() {
     DW1000.newTransmit();
     DW1000.setDefaults();
     data[0] = RANGE_FAILED;
-    DW1000.setData(data, LEN_DATA);
+    DW1000.setData(data, LEN_DATA);//transmit range failed signal
     DW1000.startTransmit();
 }
 
@@ -166,7 +166,7 @@ void receiver() {
     // so we don't need to restart the receiver manually
     DW1000.receivePermanently(true);
     DW1000.startReceive();
-}
+}//used to reset the anchor so it waits for poll signal
 
 /*
  * RANGING ALGORITHMS
@@ -225,7 +225,7 @@ void loop() {
     if (receivedAck) {
         receivedAck = false;
         // get message and parse
-        DW1000.getData(data, LEN_DATA);
+        DW1000.getData(data, LEN_DATA);//read data from RX_BUFFER register of DW1000
         byte msgId = data[0];
         if (msgId != expectedMsgId) {
             // unexpected message, start over again (except if already POLL)
@@ -234,7 +234,7 @@ void loop() {
         if (msgId == POLL) {
             // on POLL we (re-)start, so no protocol failure
             protocolFailed = false;
-            DW1000.getReceiveTimestamp(timePollReceived);
+            DW1000.getReceiveTimestamp(timePollReceived); //load DW1000 register RX_TIME to timePollReceived
             expectedMsgId = RANGE;
             transmitPollAck();
             noteActivity();
@@ -243,12 +243,13 @@ void loop() {
             DW1000.getReceiveTimestamp(timeRangeReceived);
             expectedMsgId = POLL;
             if (!protocolFailed) {
-                timePollSent.setTimestamp(data + 1);
-                timePollAckReceived.setTimestamp(data + 6);
-                timeRangeSent.setTimestamp(data + 11);
+                timePollSent.setTimestamp(data + 1); //load data[1-5] to timePollSent
+                timePollAckReceived.setTimestamp(data + 6); //load data[6-10] to timePollAckReceived
+                timeRangeSent.setTimestamp(data + 11); //load data[11-15] to timeRangeSent
                 // (re-)compute range as two-way ranging is done
                 computeRangeAsymmetric(); // CHOSEN RANGING ALGORITHM
-                transmitRangeReport(timeComputedRange.getAsMicroSeconds());
+                                          // result is loaded to timeComputedRange
+                transmitRangeReport(timeComputedRange.getAsMicroSeconds()); //transmitRangeReport defined in this ino file
                 float distance = timeComputedRange.getAsMeters();
                 Serial.print("Range: "); Serial.print(distance); Serial.print(" m");
                 Serial.print("\t RX power: "); Serial.print(DW1000.getReceivePower()); Serial.print(" dBm");
