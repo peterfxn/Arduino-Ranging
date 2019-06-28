@@ -61,7 +61,8 @@ DW1000Time timeRangeReceived;
 DW1000Time timeComputedRange; //computed from the data above, used to compute distance 
 // data buffer
 #define LEN_DATA 16
-byte data[LEN_DATA];
+byte data[LEN_DATA]; //data[0] is used to identify the type of signal(PULL, PULL_ACK, RANGE, RANGE_REPORT, RAGE_FAILED)
+                     //if data[0] is RENGE_REPORT, data[1-15] is used to store timestamp data
 // watchdog and reset period
 uint32_t lastActivity;
 uint32_t resetPeriod = 250;
@@ -138,7 +139,7 @@ void transmitPollAck() {
     // delay the same amount as ranging tag
     DW1000Time deltaTime = DW1000Time(replyDelayTimeUS, DW1000Time::MICROSECONDS);
     DW1000.setDelay(deltaTime);
-    DW1000.setData(data, LEN_DATA);//Transmit poll signal
+    DW1000.setData(data, LEN_DATA);//Transmit POLL_ACK signal
     DW1000.startTransmit();
 }
 
@@ -148,7 +149,7 @@ void transmitRangeReport(float curRange) {
     data[0] = RANGE_REPORT;
     // write final ranging result
     memcpy(data + 1, &curRange, 4);
-    DW1000.setData(data, LEN_DATA);//transmit range signal and range data
+    DW1000.setData(data, LEN_DATA);//transmit RANGE_REPORT signal and range data
     DW1000.startTransmit();
 }
 
@@ -156,7 +157,7 @@ void transmitRangeFailed() {
     DW1000.newTransmit();
     DW1000.setDefaults();
     data[0] = RANGE_FAILED;
-    DW1000.setData(data, LEN_DATA);//transmit range failed signal
+    DW1000.setData(data, LEN_DATA);//transmit RANGE_FAILED signal
     DW1000.startTransmit();
 }
 
