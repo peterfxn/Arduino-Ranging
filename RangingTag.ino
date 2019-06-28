@@ -53,7 +53,8 @@ DW1000Time timePollAckReceived;
 DW1000Time timeRangeSent;
 // data buffer
 #define LEN_DATA 16
-byte data[LEN_DATA];
+byte data[LEN_DATA]; //data[0] is used to distinguish between different types of signals
+                     //data[1-4] is used to store distance if data[0] is RANGE_REPORT
 // watchdog and reset period
 uint32_t lastActivity;
 uint32_t resetPeriod = 250;
@@ -188,8 +189,9 @@ void loop() {
         } else if (msgId == RANGE_REPORT) {
             expectedMsgId = POLL_ACK;
             float curRange;
-            memcpy(&curRange, data + 1, 4); //?? curRange is never seen again
-            transmitPoll();
+            memcpy(&curRange, data + 1, 4); //curRange is never seen again, nor is it stored, 
+                                            //so this file and RangingAnchor are for testing only, not for application
+            transmitPoll();      //start a new loop of POLL->POLL_ACK->RANGE->RANGE_REPORT 
             noteActivity();
         } else if (msgId == RANGE_FAILED) {
             expectedMsgId = POLL_ACK;
